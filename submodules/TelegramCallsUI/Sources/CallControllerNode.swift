@@ -372,6 +372,7 @@ final class CallControllerNode: ViewControllerTracingNode, CallControllerNodePro
     
     private let imageNode: TransformImageNode
     private let dimNode: ASImageNode
+    private let backgroundNode: CallAnimatedBackgroundNode
     
     private var candidateIncomingVideoNodeValue: CallVideoNode?
     private var incomingVideoNodeValue: CallVideoNode?
@@ -490,6 +491,8 @@ final class CallControllerNode: ViewControllerTracingNode, CallControllerNodePro
         self.dimNode.isUserInteractionEnabled = false
         self.dimNode.backgroundColor = UIColor(white: 0.0, alpha: 0.3)
         
+        self.backgroundNode = CallAnimatedBackgroundNode()
+        
         self.backButtonArrowNode = ASImageNode()
         self.backButtonArrowNode.displayWithoutProcessing = true
         self.backButtonArrowNode.displaysAsynchronously = false
@@ -533,6 +536,7 @@ final class CallControllerNode: ViewControllerTracingNode, CallControllerNodePro
         self.containerNode.addSubnode(self.imageNode)
         self.containerNode.addSubnode(self.videoContainerNode)
         self.containerNode.addSubnode(self.dimNode)
+        self.containerNode.addSubnode(self.backgroundNode)
         self.containerNode.addSubnode(self.statusNode)
         self.containerNode.addSubnode(self.buttonsNode)
         self.containerNode.addSubnode(self.toastNode)
@@ -1043,16 +1047,20 @@ final class CallControllerNode: ViewControllerTracingNode, CallControllerNodePro
                 
         switch callState.state {
             case .waiting, .connecting:
+                self.backgroundNode.set(state: .waiting)
                 statusValue = .text(string: self.presentationData.strings.Call_StatusConnecting, displayLogo: false)
             case let .requesting(ringing):
+                self.backgroundNode.set(state: .waiting)
                 if ringing {
                     statusValue = .text(string: self.presentationData.strings.Call_StatusRinging, displayLogo: false)
                 } else {
                     statusValue = .text(string: self.presentationData.strings.Call_StatusRequesting, displayLogo: false)
                 }
             case .terminating:
+                self.backgroundNode.set(state: .waiting)
                 statusValue = .text(string: self.presentationData.strings.Call_StatusEnded, displayLogo: false)
             case let .terminated(_, reason, _):
+                self.backgroundNode.set(state: .waiting)
                 if let reason = reason {
                     switch reason {
                         case let .ended(type):
@@ -1088,6 +1096,7 @@ final class CallControllerNode: ViewControllerTracingNode, CallControllerNodePro
                     statusValue = .text(string: self.presentationData.strings.Call_StatusEnded, displayLogo: false)
                 }
             case .ringing:
+                self.backgroundNode.set(state: .waiting)
                 var text: String
                 if self.call.isVideo {
                     text = self.presentationData.strings.Call_IncomingVideoCall
@@ -1099,6 +1108,7 @@ final class CallControllerNode: ViewControllerTracingNode, CallControllerNodePro
                 }
                 statusValue = .text(string: text, displayLogo: false)
             case .active(let timestamp, let reception, let keyVisualHash), .reconnecting(let timestamp, let reception, let keyVisualHash):
+                self.backgroundNode.set(state: (reception ?? 4) > 1 ? .active : .weak)
                 let strings = self.presentationData.strings
                 var isReconnecting = false
                 if case .reconnecting = callState.state {
@@ -1352,6 +1362,7 @@ final class CallControllerNode: ViewControllerTracingNode, CallControllerNodePro
             self.statusBar.layer.removeAnimation(forKey: "opacity")
             self.containerNode.layer.removeAnimation(forKey: "opacity")
             self.containerNode.layer.removeAnimation(forKey: "scale")
+            self.backgroundNode.startAnimating()
             self.statusBar.layer.animateAlpha(from: 0.0, to: 1.0, duration: 0.3)
             if !self.shouldStayHiddenUntilConnection {
                 self.containerNode.layer.animateScale(from: 1.04, to: 1.0, duration: 0.3)
@@ -1567,6 +1578,9 @@ final class CallControllerNode: ViewControllerTracingNode, CallControllerNodePro
         
         transition.updateAlpha(node: self.dimNode, alpha: pinchTransitionAlpha)
         transition.updateFrame(node: self.dimNode, frame: containerFullScreenFrame)
+        
+        transition.updateFrame(node: self.backgroundNode, frame: containerFullScreenFrame)
+        self.backgroundNode.updateLayout(size: layout.size, transition: .immediate)
         
         if let keyPreviewNode = self.keyPreviewNode {
             transition.updateFrame(node: keyPreviewNode, frame: containerFullScreenFrame)
