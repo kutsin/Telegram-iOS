@@ -617,7 +617,12 @@ open class ListViewItemNode: ASDisplayNode, AccessibilityFocusableNode {
         (self.supernode as? ListView)?.ensureItemNodeVisible(self, animated: false, overflow: 22.0, allowIntersection: true)
     }
     
-    public func updateFrame(_ frame: CGRect, within containerSize: CGSize, updateFrame: Bool = true) {
+    public func updateFrame(_ frame: CGRect, within containerSize: CGSize, updateFrame: Bool = true, source: String? = nil) {
+//        print("list view item node frame: \(frame), index: \(index ?? -77)")
+//        print("\(String(describing: self)) current = \(self.frame) updateFrame = \(frame) index = \(index ?? -77) source = \(source ?? "unknown" ) updateFrame = \(updateFrame)")
+//        if source == nil {
+//            print("")
+//        }
         if updateFrame {
             self.frame = frame
         }

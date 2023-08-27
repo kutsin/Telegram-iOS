@@ -244,10 +244,17 @@ public final class ChatListNavigationBar: Component {
             
             let minContentOffset: CGFloat = ChatListNavigationBar.searchScrollHeight
             
-            let clippedScrollOffset = min(minContentOffset, offset)
+            var clippedScrollOffset = min(minContentOffset, offset)
+            
+            if let subscriptions = component.storySubscriptions, subscriptions.accountItem?.storyCount ?? 0 == 0, subscriptions.items.count == 0 {
+                clippedScrollOffset = max(clippedScrollOffset, 0)
+            }
+
             if self.clippedScrollOffset == clippedScrollOffset && !self.hasDeferredScrollOffset && !forceUpdate && !allowAvatarsExpansionUpdated {
                 return
             }
+            //print(clippedScrollOffset)
+
             self.hasDeferredScrollOffset = false
             self.clippedScrollOffset = clippedScrollOffset
             

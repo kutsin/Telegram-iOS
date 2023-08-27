@@ -6,6 +6,15 @@ import TelegramCore
 public enum ChatListControllerLocation: Equatable {
     case chatList(groupId: EngineChatList.Group)
     case forum(peerId: EnginePeer.Id)
+    
+    public var description: String {
+        switch self {
+        case .chatList(let groupId):
+            return groupId == .archive ? "chatList archive" : "chatList root"
+        case .forum(let peerId):
+            return "forum " + peerId.description
+        }
+    }
 }
 
 public protocol ChatListController: ViewController {
